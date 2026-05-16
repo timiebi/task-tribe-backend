@@ -90,6 +90,8 @@ class Task(UserOwnedModel):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="todo")
     is_daily = models.BooleanField(default=False)
     completed = models.BooleanField(default=False)
+    remind_at = models.DateTimeField(null=True, blank=True)
+    reminded = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

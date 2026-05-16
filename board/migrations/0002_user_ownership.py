@@ -21,13 +21,67 @@ class Migration(migrations.Migration):
             model_name="notebook",
             name="user",
             field=models.ForeignKey(
+                blank=True,
+                null=True,
                 on_delete=django.db.models.deletion.CASCADE,
                 related_name="notebooks",
                 to=settings.AUTH_USER_MODEL,
             ),
-            preserve_default=False,
         ),
         migrations.AddField(
+            model_name="note",
+            name="user",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="notes",
+                to=settings.AUTH_USER_MODEL,
+            ),
+        ),
+        migrations.AddField(
+            model_name="plan",
+            name="user",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="plans",
+                to=settings.AUTH_USER_MODEL,
+            ),
+        ),
+        migrations.AddField(
+            model_name="task",
+            name="user",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="tasks",
+                to=settings.AUTH_USER_MODEL,
+            ),
+        ),
+        migrations.AddField(
+            model_name="event",
+            name="user",
+            field=models.ForeignKey(
+                blank=True,
+                null=True,
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="events",
+                to=settings.AUTH_USER_MODEL,
+            ),
+        ),
+        migrations.AlterField(
+            model_name="notebook",
+            name="user",
+            field=models.ForeignKey(
+                on_delete=django.db.models.deletion.CASCADE,
+                related_name="notebooks",
+                to=settings.AUTH_USER_MODEL,
+            ),
+        ),
+        migrations.AlterField(
             model_name="note",
             name="user",
             field=models.ForeignKey(
@@ -35,9 +89,8 @@ class Migration(migrations.Migration):
                 related_name="notes",
                 to=settings.AUTH_USER_MODEL,
             ),
-            preserve_default=False,
         ),
-        migrations.AddField(
+        migrations.AlterField(
             model_name="plan",
             name="user",
             field=models.ForeignKey(
@@ -45,9 +98,8 @@ class Migration(migrations.Migration):
                 related_name="plans",
                 to=settings.AUTH_USER_MODEL,
             ),
-            preserve_default=False,
         ),
-        migrations.AddField(
+        migrations.AlterField(
             model_name="task",
             name="user",
             field=models.ForeignKey(
@@ -55,9 +107,8 @@ class Migration(migrations.Migration):
                 related_name="tasks",
                 to=settings.AUTH_USER_MODEL,
             ),
-            preserve_default=False,
         ),
-        migrations.AddField(
+        migrations.AlterField(
             model_name="event",
             name="user",
             field=models.ForeignKey(
@@ -65,6 +116,5 @@ class Migration(migrations.Migration):
                 related_name="events",
                 to=settings.AUTH_USER_MODEL,
             ),
-            preserve_default=False,
         ),
     ]

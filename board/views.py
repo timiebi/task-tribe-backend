@@ -90,6 +90,24 @@ class TaskViewSet(UserScopedViewSet):
         serializer = self.get_serializer(tasks, many=True)
         return Response(serializer.data)
 
+    @action(detail=False, methods=["get"])
+    def due_reminders(self, request):
+        now = timezone.now()
+        tasks = self.get_queryset().filter(
+            remind_at__lte=now,
+            reminded=False,
+            completed=False,
+        )
+        serializer = self.get_serializer(tasks, many=True)
+        return Response(serializer.data)
+
+    @action(detail=True, methods=["post"])
+    def mark_reminded(self, request, pk=None):
+        task = self.get_object()
+        task.reminded = True
+        task.save(update_fields=["reminded", "updated_at"])
+        return Response(self.get_serializer(task).data)
+
 
 class EventViewSet(UserScopedViewSet):
     queryset = Event.objects.all()

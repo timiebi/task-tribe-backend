@@ -10,7 +10,19 @@ from rest_framework.response import Response
 @api_view(["GET"])
 @permission_classes([AllowAny])
 def health(request):
-    return Response({"status": "ok"})
+    from django.db import connection
+
+    payload = {"status": "ok"}
+    try:
+        connection.ensure_connection()
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+        Token.objects.exists()
+        payload["database"] = "ok"
+    except Exception as exc:
+        payload["status"] = "degraded"
+        payload["database"] = str(exc)
+    return Response(payload)
 
 
 @api_view(["POST"])

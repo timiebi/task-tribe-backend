@@ -65,6 +65,8 @@ class TaskSerializer(serializers.ModelSerializer):
             "status",
             "is_daily",
             "completed",
+            "remind_at",
+            "reminded",
             "created_at",
             "updated_at",
         ]
