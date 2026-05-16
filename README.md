@@ -21,22 +21,18 @@ Without `DATABASE_URL`, SQLite is used for local dev.
 
 ## Deploy (Render + Neon)
 
-1. Create a free PostgreSQL database at [neon.tech](https://neon.tech) and copy the connection string.
-2. Deploy this repo on [Render](https://render.com) as a **Web Service**:
+1. **Neon** — [console.neon.tech](https://console.neon.tech) → your project → **Connection string** (PostgreSQL).
+2. **Render** — deploy as a **Web Service**:
    - **Build command:** `./build.sh` or `pip install -r requirements.txt && python manage.py collectstatic --noinput && python manage.py migrate --noinput`
    - **Start command:** `gunicorn config.wsgi:application` (or use the `Procfile`)
-3. Set environment variables:
+3. Copy env vars from **`.env.render.example`** into Render → Environment (replace every placeholder).
+4. On **Cloudflare Pages**, set `NEXT_PUBLIC_API_URL` from **`frontend/.env.local.example`** (production section).
 
-```env
-DATABASE_URL=postgresql://...
-DJANGO_SECRET_KEY=<long-random-secret>
-DEBUG=False
-ALLOWED_HOSTS=your-app.onrender.com
-CORS_ALLOWED_ORIGINS=https://your-frontend.pages.dev
-CSRF_TRUSTED_ORIGINS=https://your-frontend.pages.dev
-```
-
-Point the frontend `NEXT_PUBLIC_API_URL` at `https://your-app.onrender.com/api`.
+| Where | File |
+|-------|------|
+| Neon → `DATABASE_URL` only | paste into Render (see `.env.render.example`) |
+| Render → all backend vars | `.env.render.example` |
+| Cloudflare → frontend API URL | `frontend/.env.local.example` |
 
 ## API
 
