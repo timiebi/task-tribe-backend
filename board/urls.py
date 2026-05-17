@@ -2,6 +2,21 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .auth_views import health, login, logout, me, register
+from .sharing_views import (
+    accept_by_token,
+    accept_connection,
+    accept_invite_from_notification,
+    decline_connection,
+    inbox_shares,
+    invite_by_email,
+    list_connections,
+    list_invites_sent,
+    list_notifications,
+    mark_notification_read,
+    mark_share_read,
+    share_item,
+    unread_notification_count,
+)
 from .views import (
     EventViewSet,
     NoteViewSet,
@@ -23,5 +38,21 @@ urlpatterns = [
     path("auth/register/", register),
     path("auth/me/", me),
     path("auth/logout/", logout),
+    path("connections/", list_connections),
+    path("connections/sent/", list_invites_sent),
+    path("connections/invite/", invite_by_email),
+    path("connections/accept-token/", accept_by_token),
+    path("connections/<int:pk>/accept/", accept_connection),
+    path("connections/<int:pk>/decline/", decline_connection),
+    path("shares/", share_item),
+    path("shares/inbox/", inbox_shares),
+    path("shares/<int:pk>/read/", mark_share_read),
+    path("notifications/", list_notifications),
+    path("notifications/unread-count/", unread_notification_count),
+    path("notifications/<int:pk>/read/", mark_notification_read),
+    path(
+        "notifications/<int:pk>/accept-invite/",
+        accept_invite_from_notification,
+    ),
     path("", include(router.urls)),
 ]

@@ -75,6 +75,10 @@ def register(request):
         password=password,
         email=email,
     )
+    if email:
+        from .sharing import link_pending_invites_for_user
+
+        link_pending_invites_for_user(user)
     token = Token.objects.create(user=user)
     return Response(
         {
