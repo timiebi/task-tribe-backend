@@ -71,7 +71,7 @@ def invite_by_email(request):
 
     if request.user.email and email == normalize_email(request.user.email):
         return Response(
-            {"detail": "You cannot invite yourself."},
+            {"detail": "You can't invite your own email address."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -86,7 +86,7 @@ def invite_by_email(request):
     if not created:
         if conn.status == SpaceConnection.STATUS_ACCEPTED:
             return Response(
-                {"detail": "Already connected with this person."},
+                {"detail": "You're already connected with them."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
         conn.status = SpaceConnection.STATUS_PENDING
@@ -97,8 +97,8 @@ def invite_by_email(request):
         create_app_notification(
             recipient=to_user,
             kind=AppNotification.KIND_INVITE,
-            title=f"{request.user.username} invited you to their space",
-            body="Accept to share tasks, notes, plans, and reminders.",
+            title=f"{request.user.username} wants to connect",
+            body="Accept to share tasks, notes, and reminders with each other.",
             payload={
                 "connection_id": conn.id,
                 "from_username": request.user.username,
@@ -119,7 +119,7 @@ def _accept_connection(conn: SpaceConnection, user: User) -> SpaceConnection:
     if not _connection_for_recipient(conn, user):
         from rest_framework.exceptions import PermissionDenied
 
-        raise PermissionDenied("This invite is not for you.")
+        raise PermissionDenied("This invite wasn't sent to you.")
 
     conn.status = SpaceConnection.STATUS_ACCEPTED
     conn.to_user = user
@@ -128,8 +128,8 @@ def _accept_connection(conn: SpaceConnection, user: User) -> SpaceConnection:
     create_app_notification(
         recipient=conn.from_user,
         kind=AppNotification.KIND_ACCEPTED,
-        title=f"{user.username} joined your space",
-        body="You can now share tasks and notes with them.",
+        title=f"{user.username} accepted your invite",
+        body="You can share tasks, notes, and reminders with each other now.",
         payload={"user_id": user.id, "username": user.username},
     )
     return conn
@@ -141,7 +141,10 @@ def accept_connection(request, pk):
     try:
         conn = SpaceConnection.objects.get(pk=pk, status=SpaceConnection.STATUS_PENDING)
     except SpaceConnection.DoesNotExist:
-        return Response({"detail": "Invite not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"detail": "That invite is no longer available."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
 
     conn = _accept_connection(conn, request.user)
     return Response(SpaceConnectionSerializer(conn).data)
@@ -153,14 +156,20 @@ def decline_connection(request, pk):
     try:
         conn = SpaceConnection.objects.get(pk=pk, status=SpaceConnection.STATUS_PENDING)
     except SpaceConnection.DoesNotExist:
-        return Response({"detail": "Invite not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"detail": "That invite is no longer available."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
 
     if not _connection_for_recipient(conn, request.user):
-        return Response({"detail": "Not allowed."}, status=status.HTTP_403_FORBIDDEN)
+        return Response(
+            {"detail": "You can't respond to this invite."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
 
     conn.status = SpaceConnection.STATUS_DECLINED
     conn.save(update_fields=["status", "updated_at"])
-    return Response({"detail": "Declined."})
+    return Response({"detail": "Invite declined."})
 
 
 @api_view(["POST"])
@@ -175,12 +184,15 @@ def accept_by_token(request):
             invite_token=token, status=SpaceConnection.STATUS_PENDING
         )
     except SpaceConnection.DoesNotExist:
-        return Response({"detail": "Invalid or expired invite."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"detail": "This invite link isn't valid anymore."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
 
     if not request.user.is_authenticated:
         return Response(
             {
-                "detail": "Sign in to accept this invite.",
+                "detail": "Sign in first, then accept the invite.",
                 "requires_login": True,
                 "invite_email": conn.invite_email,
                 "from_username": conn.from_user.username,
@@ -202,11 +214,16 @@ def share_item(request):
     try:
         recipient = User.objects.get(pk=data["to_user_id"])
     except User.DoesNotExist:
-        return Response({"detail": "User not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"detail": "We couldn't find that person."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
 
     if not users_are_connected(request.user, recipient):
         return Response(
-            {"detail": "You can only share with accepted connections."},
+            {
+                "detail": "They need to accept your invite before you can share.",
+            },
             status=status.HTTP_400_BAD_REQUEST,
         )
 
@@ -230,11 +247,12 @@ def share_item(request):
     }
     label = type_labels.get(data["item_type"], "item")
 
+    item_title = payload.get("title", "")
     create_app_notification(
         recipient=recipient,
         kind=AppNotification.KIND_SHARED,
         title=f"{request.user.username} shared a {label} with you",
-        body=payload.get("title", ""),
+        body=item_title or f"Open Notifications to view it.",
         payload={
             "shared_item_id": shared.id,
             "item_type": data["item_type"],
@@ -258,7 +276,10 @@ def mark_share_read(request, pk):
     try:
         item = SharedItem.objects.get(pk=pk, shared_with=request.user)
     except SharedItem.DoesNotExist:
-        return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"detail": "We couldn't find that shared item."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
     if not item.read_at:
         item.read_at = timezone.now()
         item.save(update_fields=["read_at"])
@@ -287,7 +308,10 @@ def mark_notification_read(request, pk):
     try:
         note = AppNotification.objects.get(pk=pk, recipient=request.user)
     except AppNotification.DoesNotExist:
-        return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"detail": "We couldn't find that notification."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
     if not note.read_at:
         note.read_at = timezone.now()
         note.save(update_fields=["read_at"])
@@ -304,18 +328,27 @@ def accept_invite_from_notification(request, pk):
             kind=AppNotification.KIND_INVITE,
         )
     except AppNotification.DoesNotExist:
-        return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
+        return Response(
+            {"detail": "We couldn't find that notification."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
 
     conn_id = note.payload.get("connection_id")
     if not conn_id:
-        return Response({"detail": "Invalid notification."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "This notification isn't valid anymore."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     try:
         conn = SpaceConnection.objects.get(
             pk=conn_id, status=SpaceConnection.STATUS_PENDING
         )
     except SpaceConnection.DoesNotExist:
-        return Response({"detail": "Invite already handled."}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(
+            {"detail": "You've already accepted or declined this invite."},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
 
     conn = _accept_connection(conn, request.user)
     if not note.read_at:

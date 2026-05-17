@@ -33,7 +33,7 @@ def login(request):
     user = authenticate(username=username, password=password)
     if not user:
         return Response(
-            {"detail": "Invalid username or password."},
+            {"detail": "That username or password doesn't match. Try again."},
             status=status.HTTP_401_UNAUTHORIZED,
         )
     token, _ = Token.objects.get_or_create(user=user)
@@ -56,17 +56,17 @@ def register(request):
 
     if not username or not password:
         return Response(
-            {"detail": "Username and password are required."},
+            {"detail": "Please enter a username and password."},
             status=status.HTTP_400_BAD_REQUEST,
         )
     if User.objects.filter(username=username).exists():
         return Response(
-            {"detail": "Username already taken."},
+            {"detail": "That username is already taken. Pick another one."},
             status=status.HTTP_400_BAD_REQUEST,
         )
     if len(password) < 8:
         return Response(
-            {"detail": "Password must be at least 8 characters."},
+            {"detail": "Use a password at least 8 characters long."},
             status=status.HTTP_400_BAD_REQUEST,
         )
 

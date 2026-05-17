@@ -55,8 +55,8 @@ def link_pending_invites_for_user(user: User) -> None:
         create_app_notification(
             recipient=user,
             kind=AppNotification.KIND_INVITE,
-            title=f"{conn.from_user.username} invited you to their space",
-            body="Accept to share tasks, notes, and more.",
+            title=f"{conn.from_user.username} wants to connect",
+            body="Accept to share tasks, notes, and reminders with each other.",
             payload={
                 "connection_id": conn.id,
                 "from_username": conn.from_user.username,
@@ -74,11 +74,11 @@ def get_owned_item(user: User, item_type: str, item_id: int):
     }
     model = model_map.get(item_type)
     if not model:
-        raise ValidationError({"item_type": "Invalid item type."})
+        raise ValidationError({"item_type": "That type of item can't be shared."})
     try:
         return model.objects.get(pk=item_id, user=user)
     except model.DoesNotExist as exc:
-        raise PermissionDenied("You do not own this item.") from exc
+        raise PermissionDenied("You can only share things you created.") from exc
 
 
 def snapshot_item(item, item_type: str) -> dict:
