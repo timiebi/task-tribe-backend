@@ -121,3 +121,12 @@ CSRF_TRUSTED_ORIGINS = [
     for o in os.getenv("CSRF_TRUSTED_ORIGINS", "http://localhost:3000").split(",")
     if o.strip()
 ]
+
+VAPID_PUBLIC_KEY = os.getenv("VAPID_PUBLIC_KEY", "")
+VAPID_PRIVATE_KEY = os.getenv("VAPID_PRIVATE_KEY", "")
+VAPID_SUBJECT = os.getenv("VAPID_SUBJECT", "mailto:admin@example.com")
+CRON_SECRET = os.getenv("CRON_SECRET", "")
+APP_FRONTEND_URL = os.getenv(
+    "APP_FRONTEND_URL",
+    "https://task-board-frontend.kosutimiebinicholas.workers.dev",
+)

@@ -35,13 +35,36 @@ def create_app_notification(
     body: str = "",
     payload: dict | None = None,
 ) -> AppNotification:
-    return AppNotification.objects.create(
+    notification = AppNotification.objects.create(
         recipient=recipient,
         kind=kind,
         title=title,
         body=body,
         payload=payload or {},
     )
+
+    try:
+        from .push import build_payload, push_to_user
+
+        route_map = {
+            AppNotification.KIND_INVITE: "/?tab=notifications",
+            AppNotification.KIND_ACCEPTED: "/?tab=notifications",
+            AppNotification.KIND_SHARED: "/?tab=notifications",
+        }
+        push_to_user(
+            recipient,
+            build_payload(
+                title=title,
+                body=body,
+                url=route_map.get(kind, "/?tab=notifications"),
+                tag=f"app-notification-{notification.id}",
+                data={"kind": kind, "notification_id": notification.id},
+            ),
+        )
+    except Exception:
+        pass
+
+    return notification
 
 
 def link_pending_invites_for_user(user: User) -> None:

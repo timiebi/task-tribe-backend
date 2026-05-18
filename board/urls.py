@@ -2,6 +2,8 @@ from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
 from .auth_views import health, login, logout, me, register
+from .push_views import public_key as push_public_key
+from .push_views import run_due_reminders, subscribe as push_subscribe, unsubscribe as push_unsubscribe
 from .sharing_views import (
     accept_by_token,
     accept_connection,
@@ -54,5 +56,9 @@ urlpatterns = [
         "notifications/<int:pk>/accept-invite/",
         accept_invite_from_notification,
     ),
+    path("push/public-key/", push_public_key),
+    path("push/subscribe/", push_subscribe),
+    path("push/unsubscribe/", push_unsubscribe),
+    path("push/run-due/", run_due_reminders),
     path("", include(router.urls)),
 ]
