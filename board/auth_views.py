@@ -6,6 +6,8 @@ from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
+from .timezone_utils import resolve_request_timezone_context
+
 
 @api_view(["GET"])
 @permission_classes([AllowAny])
@@ -23,6 +25,13 @@ def health(request):
         payload["status"] = "degraded"
         payload["database"] = str(exc)
     return Response(payload)
+
+
+@api_view(["GET"])
+@permission_classes([AllowAny])
+def time_context(request):
+    """Return which timezone the server used for this request (debug / travel check)."""
+    return Response(resolve_request_timezone_context(request))
 
 
 @api_view(["POST"])

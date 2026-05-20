@@ -6,6 +6,7 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .models import Event, Note, Notebook, Plan, Task
+from .timezone_utils import request_localdate
 from .serializers import (
     EventSerializer,
     NoteSerializer,
@@ -83,7 +84,7 @@ class TaskViewSet(UserScopedViewSet):
 
     @action(detail=False, methods=["get"])
     def today(self, request):
-        today = timezone.localdate()
+        today = request_localdate(request)
         tasks = self.get_queryset().filter(
             Q(is_daily=True) | Q(due_date__date=today)
         )

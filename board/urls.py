@@ -1,7 +1,7 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .auth_views import health, login, logout, me, register
+from .auth_views import health, login, logout, me, register, time_context
 from .push_views import public_key as push_public_key
 from .push_views import run_due_reminders, subscribe as push_subscribe, unsubscribe as push_unsubscribe
 from .sharing_views import (
@@ -36,6 +36,7 @@ router.register("events", EventViewSet)
 
 urlpatterns = [
     path("health/", health),
+    path("time-context/", time_context),
     path("auth/login/", login),
     path("auth/register/", register),
     path("auth/me/", me),
