@@ -2,6 +2,7 @@ import os
 from pathlib import Path
 
 import dj_database_url
+from corsheaders.defaults import default_headers
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -115,6 +116,12 @@ CORS_ALLOWED_ORIGINS = [
     if o.strip()
 ]
 CORS_ALLOW_CREDENTIALS = True
+
+# Custom headers (e.g. X-Timezone from the frontend) must be listed for preflight.
+CORS_ALLOW_HEADERS = (
+    *default_headers,
+    "x-timezone",
+)
 
 CSRF_TRUSTED_ORIGINS = [
     o.strip()
