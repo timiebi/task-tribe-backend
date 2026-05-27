@@ -1,7 +1,16 @@
 from django.urls import include, path
 from rest_framework.routers import DefaultRouter
 
-from .auth_views import health, login, logout, me, register, time_context
+from .auth_views import (
+    health,
+    login,
+    logout,
+    me,
+    password_reset_confirm,
+    password_reset_request,
+    register,
+    time_context,
+)
 from .push_views import public_key as push_public_key
 from .push_views import run_due_reminders, subscribe as push_subscribe, unsubscribe as push_unsubscribe
 from .sharing_views import (
@@ -9,6 +18,7 @@ from .sharing_views import (
     accept_connection,
     accept_invite_from_notification,
     decline_connection,
+    import_share,
     inbox_shares,
     invite_by_email,
     list_connections,
@@ -41,6 +51,8 @@ urlpatterns = [
     path("auth/register/", register),
     path("auth/me/", me),
     path("auth/logout/", logout),
+    path("auth/password-reset/request/", password_reset_request),
+    path("auth/password-reset/confirm/", password_reset_confirm),
     path("connections/", list_connections),
     path("connections/sent/", list_invites_sent),
     path("connections/invite/", invite_by_email),
@@ -49,6 +61,7 @@ urlpatterns = [
     path("connections/<int:pk>/decline/", decline_connection),
     path("shares/", share_item),
     path("shares/inbox/", inbox_shares),
+    path("shares/<int:pk>/import/", import_share),
     path("shares/<int:pk>/read/", mark_share_read),
     path("notifications/", list_notifications),
     path("notifications/unread-count/", unread_notification_count),

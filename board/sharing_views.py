@@ -14,9 +14,11 @@ from .sharing import (
     snapshot_item,
     users_are_connected,
 )
+from .sharing_import import import_shared_item
 from .sharing_serializers import (
     AcceptTokenSerializer,
     AppNotificationSerializer,
+    ImportShareSerializer,
     InviteByEmailSerializer,
     ShareItemSerializer,
     SharedItemSerializer,
@@ -257,6 +259,8 @@ def share_item(request):
             "shared_item_id": shared.id,
             "item_type": data["item_type"],
             "from_username": request.user.username,
+            "message": data.get("message", ""),
+            "snapshot": payload,
         },
     )
 
@@ -268,6 +272,43 @@ def share_item(request):
 def inbox_shares(request):
     qs = SharedItem.objects.filter(shared_with=request.user).select_related("shared_by")
     return Response(SharedItemSerializer(qs, many=True).data)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def import_share(request, pk):
+    ser = ImportShareSerializer(data=request.data)
+    ser.is_valid(raise_exception=True)
+    target_type = ser.validated_data["target"]
+
+    try:
+        item = SharedItem.objects.select_related("shared_by").get(
+            pk=pk, shared_with=request.user
+        )
+    except SharedItem.DoesNotExist:
+        return Response(
+            {"detail": "We couldn't find that shared item."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    try:
+        created = import_shared_item(request.user, item, target_type)
+    except PermissionError:
+        return Response(
+            {"detail": "You can't import this item."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+    except ValueError as exc:
+        return Response({"detail": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+
+    return Response(
+        {
+            "as": target_type,
+            "id": created.id,
+            "title": getattr(created, "title", ""),
+        },
+        status=status.HTTP_201_CREATED,
+    )
 
 
 @api_view(["POST"])

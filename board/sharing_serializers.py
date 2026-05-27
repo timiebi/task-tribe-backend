@@ -91,3 +91,13 @@ class ShareItemSerializer(serializers.Serializer):
 
 class AcceptTokenSerializer(serializers.Serializer):
     token = serializers.CharField(max_length=64)
+
+
+class ImportShareSerializer(serializers.Serializer):
+    target = serializers.ChoiceField(choices=SharedItem.ITEM_CHOICES)
+
+    def to_internal_value(self, data):
+        payload = dict(data)
+        if "as" in payload and "target" not in payload:
+            payload["target"] = payload["as"]
+        return super().to_internal_value(payload)
