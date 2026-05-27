@@ -137,3 +137,36 @@ def snapshot_item(item, item_type: str) -> dict:
             "remind_at": item.remind_at.isoformat() if item.remind_at else None,
         }
     return {}
+
+
+def delete_notification_for_user(user: User, notification: AppNotification) -> dict:
+    """Remove one activity alert; for shares, also remove the inbox copy."""
+    if notification.recipient_id != user.id:
+        raise PermissionError("Not your notification.")
+
+    shared_removed = False
+    if notification.kind == AppNotification.KIND_SHARED:
+        raw = notification.payload.get("shared_item_id")
+        if raw is not None:
+            try:
+                shared_id = int(raw)
+            except (TypeError, ValueError):
+                shared_id = None
+            if shared_id is not None:
+                deleted, _ = SharedItem.objects.filter(
+                    pk=shared_id, shared_with=user
+                ).delete()
+                shared_removed = deleted > 0
+
+    notification.delete()
+    return {"deleted_shared_item": shared_removed}
+
+
+def clear_notifications_for_user(user: User) -> dict:
+    """Clear Activity"""
+    notif_deleted, _ = AppNotification.objects.filter(recipient=user).delete()
+    shared_deleted, _ = SharedItem.objects.filter(shared_with=user).delete()
+    return {
+        "deleted_notifications": notif_deleted,
+        "deleted_shared_items": shared_deleted,
+    }

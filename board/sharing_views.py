@@ -8,7 +8,9 @@ from rest_framework.response import Response
 
 from .models import AppNotification, SharedItem, SpaceConnection
 from .sharing import (
+    clear_notifications_for_user,
     create_app_notification,
+    delete_notification_for_user,
     get_owned_item,
     normalize_email,
     snapshot_item,
@@ -332,6 +334,35 @@ def mark_share_read(request, pk):
 def list_notifications(request):
     qs = AppNotification.objects.filter(recipient=request.user)[:100]
     return Response(AppNotificationSerializer(qs, many=True).data)
+
+
+@api_view(["DELETE"])
+@permission_classes([IsAuthenticated])
+def delete_notification(request, pk):
+    try:
+        note = AppNotification.objects.get(pk=pk, recipient=request.user)
+    except AppNotification.DoesNotExist:
+        return Response(
+            {"detail": "We couldn't find that notification."},
+            status=status.HTTP_404_NOT_FOUND,
+        )
+
+    try:
+        result = delete_notification_for_user(request.user, note)
+    except PermissionError:
+        return Response(
+            {"detail": "You can't delete this notification."},
+            status=status.HTTP_403_FORBIDDEN,
+        )
+
+    return Response(result, status=status.HTTP_200_OK)
+
+
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def clear_all_notifications(request):
+    result = clear_notifications_for_user(request.user)
+    return Response(result, status=status.HTTP_200_OK)
 
 
 @api_view(["GET"])
